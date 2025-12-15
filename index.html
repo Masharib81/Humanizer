@@ -273,91 +273,84 @@
         </div>
     </div>
 
-    <script>
-        const WEBHOOK_URL = 'http://localhost:5678/webhook-test/9f4df53a-370c-4110-8771-81b3a0a1e0b2';
-        
-        const inputText = document.getElementById('inputText');
-        const outputArea = document.getElementById('outputArea');
-        const submitButton = document.getElementById('submitButton');
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        const inputCharCount = document.getElementById('inputCharCount');
-        const outputCharCount = document.getElementById('outputCharCount');
+   <script>
+    const WEBHOOK_URL = 'http://localhost:5678/webhook-test/9f4df53a-370c-4110-8771-81b3a0a1e0b2';
 
-        // Update character count
-        inputText.addEventListener('input', () => {
-            inputCharCount.textContent = `${inputText.value.length} characters`;
-            errorMessage.classList.add('hidden');
-        });
+    const inputText = document.getElementById('inputText');
+    const outputArea = document.getElementById('outputArea');
+    const submitButton = document.getElementById('submitButton');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    const inputCharCount = document.getElementById('inputCharCount');
+    const outputCharCount = document.getElementById('outputCharCount');
 
-        // Handle submit
-        submitButton.addEventListener('click', async () => {
-            if (!inputText.value.trim()) {
-                showError('Please enter some text to humanize');
-                return;
+    inputText.addEventListener('input', () => {
+        inputCharCount.textContent = `${inputText.value.length} characters`;
+        hideError();
+    });
+
+    submitButton.addEventListener('click', async () => {
+        if (!inputText.value.trim()) {
+            showError('Please enter some text to humanize');
+            return;
+        }
+
+        setLoading(true);
+        hideError();
+        outputArea.textContent = 'Processing...';
+
+        try {
+            const response = await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: inputText.value }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
 
-            setLoading(true);
-            hideError();
-            outputArea.innerHTML = `
-                <div class="loading-container">
-                    <div class="spinner"></div>
-                    <span class="loading-text">Processing...</span>
-                </div>
-            `;
+            let resultText = '';
 
+            // Try JSON first
             try {
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ text: inputText.value }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.text();
-                const result = data.humanizedText || data.text || JSON.stringify(data, null, 2);
-                outputArea.textContent = result;
-                outputCharCount.textContent = `${result.length} characters`;
-            } catch (err) {
-                showError(err.message || 'Failed to process text. Please check if the webhook is running.');
-                outputArea.innerHTML = '<span class="output-placeholder">Your humanized text will appear here...</span>';
-                outputCharCount.textContent = '';
-            } finally {
-                setLoading(false);
+                const data = await response.json();
+                resultText =
+                    data.humanizedText ||
+                    data.text ||
+                    JSON.stringify(data, null, 2);
+            } catch {
+                // If not JSON, read as plain text
+                resultText = await response.text();
             }
-        });
 
-        function setLoading(isLoading) {
-            submitButton.disabled = isLoading;
-            inputText.disabled = isLoading;
-            if (isLoading) {
-                submitButton.innerHTML = `
-                    <div class="spinner" style="width: 20px; height: 20px; border-width: 2px; margin: 0;"></div>
-                    Processing...
-                `;
-            } else {
-                submitButton.innerHTML = `
-                    <svg class="button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
-                    Humanize Text
-                `;
-            }
-        }
+            outputArea.textContent = resultText;
+            outputCharCount.textContent = `${resultText.length} characters`;
 
-        function showError(message) {
-            errorText.textContent = message;
-            errorMessage.classList.remove('hidden');
+        } catch (err) {
+            showError(err.message || 'Webhook connection failed');
+            outputArea.textContent = 'Your humanized text will appear here...';
+            outputCharCount.textContent = '';
+        } finally {
+            setLoading(false);
         }
+    });
 
-        function hideError() {
-            errorMessage.classList.add('hidden');
-        }
-    </script>
+    function setLoading(isLoading) {
+        submitButton.disabled = isLoading;
+        inputText.disabled = isLoading;
+        submitButton.textContent = isLoading ? 'Processing...' : 'Humanize Text';
+    }
+
+    function showError(message) {
+        errorText.textContent = message;
+        errorMessage.classList.remove('hidden');
+    }
+
+    function hideError() {
+        errorMessage.classList.add('hidden');
+    }
+</script>
+
 </body>
 </html>
