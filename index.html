@@ -319,7 +319,7 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const data = await response.json();
+                const data = await response.text();
                 const result = data.humanizedText || data.text || JSON.stringify(data, null, 2);
                 outputArea.textContent = result;
                 outputCharCount.textContent = `${result.length} characters`;
