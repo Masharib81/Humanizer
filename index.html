@@ -273,7 +273,7 @@
         </div>
     </div>
 
-   <script>
+ <script>
     const WEBHOOK_URL = 'http://localhost:5678/webhook-test/9f4df53a-370c-4110-8771-81b3a0a1e0b2';
 
     const inputText = document.getElementById('inputText');
@@ -291,7 +291,7 @@
 
     submitButton.addEventListener('click', async () => {
         if (!inputText.value.trim()) {
-            showError('Please enter some text to humanize');
+            showError('Please enter some text');
             return;
         }
 
@@ -310,25 +310,28 @@
                 throw new Error(`Server error: ${response.status}`);
             }
 
-            let resultText = '';
+            // ✅ READ BODY ONLY ONCE
+            const rawText = await response.text();
 
-            // Try JSON first
+            let resultText = rawText;
+
+            // Try to parse JSON safely
             try {
-                const data = await response.json();
+                const data = JSON.parse(rawText);
                 resultText =
                     data.humanizedText ||
                     data.text ||
                     JSON.stringify(data, null, 2);
             } catch {
-                // If not JSON, read as plain text
-                resultText = await response.text();
+                // Not JSON → plain text response
+                resultText = rawText;
             }
 
             outputArea.textContent = resultText;
             outputCharCount.textContent = `${resultText.length} characters`;
 
         } catch (err) {
-            showError(err.message || 'Webhook connection failed');
+            showError(err.message || 'Webhook is not reachable');
             outputArea.textContent = 'Your humanized text will appear here...';
             outputCharCount.textContent = '';
         } finally {
