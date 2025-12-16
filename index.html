@@ -410,6 +410,47 @@
                 left: 1rem;
             }
         }
+
+        .session-id-container {
+            background: rgba(30, 39, 73, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .session-id-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .session-id-input {
+            width: 100%;
+            background: rgba(10, 14, 39, 0.6);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            color: var(--text-primary);
+            font-family: 'Inter', monospace;
+            font-size: 0.9375rem;
+            transition: all 0.3s ease;
+        }
+
+        .session-id-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .session-id-input::placeholder {
+            color: var(--text-muted);
+        }
     </style>
 </head>
 
@@ -419,6 +460,16 @@
             <h1>✨ AI Text Humanizer</h1>
             <p class="subtitle">Transform AI-generated content into natural, human-sounding text</p>
         </header>
+
+        <div class="session-id-container">
+            <div class="session-id-label">
+                <span>🔑 Session ID</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">(Auto-generated for chat memory
+                    tracking)</span>
+            </div>
+            <input type="text" id="session-id" class="session-id-input"
+                placeholder="Session ID will be auto-generated..." readonly>
+        </div>
 
         <div class="main-content">
             <div class="panel">
@@ -511,6 +562,15 @@ The transformation adds natural language patterns, varied sentence structures, a
         const copyBtn = document.getElementById('copy-btn');
         const clearBtn = document.getElementById('clear-btn');
         const notification = document.getElementById('notification');
+        const sessionIdInput = document.getElementById('session-id');
+
+        // Generate unique session ID
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Initialize session ID on page load
+        sessionIdInput.value = generateSessionId();
 
         // Update stats
         function updateStats() {
@@ -700,6 +760,7 @@ The transformation adds natural language patterns, varied sentence structures, a
                             },
                             body: JSON.stringify({
                                 text: text,
+                                sessionId: sessionIdInput.value,
                                 timestamp: new Date().toISOString(),
                                 action: 'humanize'
                             }),
